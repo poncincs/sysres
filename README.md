@@ -8,8 +8,8 @@ Créé et maintenu par **Samuel PONCIN CHAPERON**
 
 ## 📁 Structure du repo
 
-```
-sysforge/
+```bash
+sysres/
 ├── README.md
 └── users/
     ├── README.md
@@ -33,8 +33,8 @@ sysforge/
 Cloner le repo :
 
 ```bash
-git clone https://github.com/<votre-username>/sysforge.git
-cd sysforge
+git clone https://github.com/<votre-username>/sysres.git
+cd sysres
 ```
 
 Rendre un script exécutable :
