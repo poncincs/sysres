@@ -23,7 +23,7 @@ sysres/
 ## 📂 Catégories
 
 | Dossier | Description |
-|---|---|
+| --- | --- |
 | [`users/`](./users/) | Gestion des utilisateurs Linux (création, permissions, environnement) |
 
 ---

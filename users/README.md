@@ -17,7 +17,7 @@ Crée un utilisateur Linux complet avec :
 #### Profils de couleur disponibles
 
 | Profil | Couleur | Usage typique |
-|---|---|---|
+| --- | --- | --- |
 | `user` | 🟢 Vert | Utilisateur standard sur PC ou serveur classique |
 | `critical` | 🟠 Orange | Utilisateur sur un serveur critique (prod, base de données…) |
 | `root` | 🔴 Rouge | Compte root ou administrateur |
@@ -34,7 +34,7 @@ Le **répertoire courant** est toujours affiché en **bleu** quel que soit le pr
 #### Options
 
 | Option | Description | Obligatoire |
-|---|---|---|
+| --- | --- | --- |
 | `-u <username>` | Nom de l'utilisateur à créer | ✅ |
 | `-p <password>` | Mot de passe de l'utilisateur | ✅ |
 | `-t <type>` | Profil PS1 : `user`, `critical`, `root` | ✅ |
@@ -56,7 +56,7 @@ Le **répertoire courant** est toujours affiché en **bleu** quel que soit le pr
 
 #### Ce que le script crée
 
-```
+```bash
 /home/<username>/
 ├── .ssh/
 │   └── authorized_keys   (chmod 600)
