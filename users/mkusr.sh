@@ -3,7 +3,7 @@
 # Script  : mkusr.sh
 # Author  : Samuel PONCIN CHAPERON
 # Date    : 2026-06-05
-# Version : 2.0.0
+# Version : 2.1.0
 # Description : Crée un utilisateur Linux avec bash, dossier SSH et PS1
 #               coloré selon le profil (user, critical, root).
 # =============================================================================
@@ -13,7 +13,7 @@ set -euo pipefail
 # --- Couleurs pour l'affichage du script lui-même ---
 RED='\033[0;31m'
 GREEN='\033[0;32m'
-ORANGE='\033[0;38;5;208m'
+ORANGE='\033[0;33m'
 BLUE='\033[0;34m'
 CYAN='\033[0;36m'
 BOLD='\033[1m'
@@ -154,17 +154,22 @@ if [[ -n "$HOSTNAME_OVERRIDE" ]]; then
 	HOSTNAME_LINE="export HOSTNAME_DISPLAY=\"$HOSTNAME_OVERRIDE\""
 fi
 
-# Écrire le PS1 dans le .bashrc
+# Écrire le PS1 et les alias dans le .bashrc
 cat >> /home/$USERNAME/.bashrc << EOF
 
 # --- PS1 personnalisé (mkusr.sh - profil : $TYPE) ---
 $HOSTNAME_LINE
 export PS1='$PS1_VALUE'
+
+# --- Alias (mkusr.sh) ---
+alias l='ls -lha --color=auto'
+alias grep='grep --color=auto'
 EOF
 
 chown $USERNAME:$USERNAME /home/$USERNAME/.bashrc
 cat <<- EOF
 	${GREEN}[OK]${NC}     PS1 personnalisé appliqué (profil : $(printf "$PROFILE_LABEL"))
+	${GREEN}[OK]${NC}     Alias ajoutés (l, grep)
 EOF
 
 cat <<- EOF
@@ -174,5 +179,6 @@ cat <<- EOF
 	           Home    : /home/$USERNAME
 	           SSH     : /home/$USERNAME/.ssh/authorized_keys
 	           Profil  : $(printf "$PROFILE_LABEL")
+	           Alias   : l='ls -lha --color=auto'  |  grep='grep --color=auto'
 
 EOF
