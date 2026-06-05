@@ -60,7 +60,7 @@ Le **répertoire courant** est toujours affiché en **bleu** quel que soit le pr
 /home/<username>/
 ├── .ssh/
 │   └── authorized_keys   (chmod 600)
-└── .bashrc               (PS1 personnalisé ajouté)
+└── .bashrc               (PS1 personnalisé + alias ajouté)
 ```
 
 #### Prérequis
