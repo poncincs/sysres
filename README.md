@@ -2,8 +2,6 @@
 
 > Collection de scripts système et réseau pour Linux — administration, automatisation et configuration de serveurs.
 
-Créé et maintenu par **Samuel PONCIN CHAPERON**
-
 ---
 
 ## 📁 Structure du repo
@@ -64,3 +62,9 @@ Ce projet est distribué sous licence MIT. Voir [`LICENSE`](./LICENSE) pour plus
 
 Les issues et pull requests sont les bienvenues.  
 Pour toute suggestion, ouvrir une issue en décrivant le besoin.
+
+---
+
+## ✍ Auteur
+
+Créé et maintenu par **Samuel PONCIN CHAPERON**
