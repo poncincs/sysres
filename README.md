@@ -1,4 +1,4 @@
-# ⚙️ sysforge
+# ⚙️ sysres
 
 > Collection de scripts système et réseau pour Linux — administration, automatisation et configuration de serveurs.
 
