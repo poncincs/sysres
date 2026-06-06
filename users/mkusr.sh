@@ -13,7 +13,7 @@ set -euo pipefail
 # --- Couleurs pour l'affichage du script lui-même ---
 RED='\033[0;31m'
 GREEN='\033[0;32m'
-ORANGE='\033[0;33m'
+ORANGE='\033[0;38;5;208m'
 BLUE='\033[0;34m'
 CYAN='\033[0;36m'
 BOLD='\033[1m'
@@ -103,7 +103,7 @@ case "$TYPE" in
 		PROFILE_LABEL="${GREEN}user${NC}"
 		;;
 	critical)
-		PS1_VALUE='\[\e[0;33m\]\u@\h\[\e[0m\]:\[\e[0;34m\]\w\[\e[0m\]\$ '
+		PS1_VALUE='\[\e[0;38;5;208m\]\u@\h\[\e[0m\]:\[\e[0;34m\]\w\[\e[0m\]\$ '
 		PROFILE_LABEL="${ORANGE}critical${NC}"
 		;;
 	root)
@@ -162,7 +162,7 @@ $HOSTNAME_LINE
 export PS1='$PS1_VALUE'
 
 # --- Alias (mkusr.sh) ---
-alias l='ls -lha --color=auto'
+alias l='ls -lhA --color=auto'
 alias grep='grep --color=auto'
 EOF
 
@@ -179,6 +179,6 @@ cat <<- EOF
 	           Home    : /home/$USERNAME
 	           SSH     : /home/$USERNAME/.ssh/authorized_keys
 	           Profil  : $(printf "$PROFILE_LABEL")
-	           Alias   : l='ls -lha --color=auto'  |  grep='grep --color=auto'
+	           Alias   : l='ls -lhA --color=auto'  |  grep='grep --color=auto'
 
 EOF
