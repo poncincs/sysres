@@ -110,7 +110,7 @@ while IFS= read -r line; do
     # hoplimit -> supprimé
     if echo "$line" | grep -q 'hoplimit'; then
         line=$(echo "$line" | sed 's/hoplimit//')
-        stp_count=$((hoplimit_count+1))
+        hoplimit_count=$((hoplimit_count+1))
     fi
 
     # ip nat pool ... netmask X -> prefix-length N
