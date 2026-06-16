@@ -122,10 +122,10 @@ Lors d'une migration complète, appliquer les scripts dans cet ordre :
 Exemple en chaîne :
 
 ```bash
-./convert_cleanup.sh        full-config.conf full-config-step1.conf
-./convert_vrf.sh            full-config-step1.conf full-config-step2.conf
-./convert_object_group.sh   full-config-step2.conf full-config-step3.conf
-./convert_acl.sh            full-config-step3.conf full-config-final.conf
+./convert_cleanup.sh        conf/full-config.conf conf/full-config-step1.conf
+./convert_vrf.sh            conf/full-config-step1.conf conf/full-config-step2.conf
+./convert_object_group.sh   conf/full-config-step2.conf conf/full-config-step3.conf
+./convert_acl.sh            conf/full-config-step3.conf conf/full-config-final.conf
 ```
 
 ---
