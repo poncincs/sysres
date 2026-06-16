@@ -1,17 +1,13 @@
-#!/usr/bin/env bash
-# ==============================================================================
-# Nom        : convert_acl.sh
-# Description: Conversion ACL numérotées -> nommées IOS-XE (C9500)
+#!/bin/bash
+# =============================================================================
+# convert_acl.sh - Conversion ACL numérotées -> nommées IOS-XE (C9500)
 #
 # Conversions effectuées :
 #   access-list 1-99    -> ip access-list standard ACL_<num>
 #   access-list 100-199 -> ip access-list extended ACL_<num>
 #
-# Usage      : ./convert_acl.sh <fichier_source> [fichier_sortie]
-# Auteur     : Samuel PONCIN CHAPERON
-# Date       : 16-06-2026
-# Version    : 1.0.0
-# ==============================================================================
+# Usage : ./convert_acl.sh <fichier_source> [fichier_sortie]
+# =============================================================================
 
 set -euo pipefail
 
@@ -40,56 +36,49 @@ echo -e "  Source  : ${YELLOW}$INPUT${NC}"
 echo -e "  Sortie  : ${YELLOW}$OUTPUT${NC}"
 echo ""
 
-converted=$(gawk '
-BEGIN {
-    current_acl = ""
-    std_count = 0
-    ext_count = 0
-}
-{
-    line = $0
+current_acl=""
+count_std=0
+count_ext=0
+tmpfile=$(mktemp)
 
-    if (match(line, /^access-list ([0-9]+) (permit|deny) (.*)/, arr)) {
-        num  = arr[1] + 0
-        action = arr[2]
-        rest   = arr[3]
+while IFS= read -r line; do
+    # Ligne de type : access-list <num> permit|deny <reste>
+    if echo "$line" | grep -qE '^access-list [0-9]+ (permit|deny) '; then
+        num=$(echo "$line"    | awk '{print $2}')
+        action=$(echo "$line" | awk '{print $3}')
+        rest=$(echo "$line"   | awk '{$1=$2=$3=""; sub(/^[[:space:]]+/,""); print}')
 
-        if ((num >= 1 && num <= 99) || (num >= 1300 && num <= 1999)) {
-            type = "standard"
-        } else {
-            type = "extended"
-        }
+        if { [[ $num -ge 1 && $num -le 99 ]] || [[ $num -ge 1300 && $num -le 1999 ]]; }; then
+            type="standard"
+        else
+            type="extended"
+        fi
 
-        acl_name = "ACL_" num
+        acl_name="ACL_${num}"
 
-        if (acl_name != current_acl) {
-            current_acl = acl_name
-            print "ip access-list " type " " acl_name
-            if (type == "standard") std_count++
-            else ext_count++
-        }
+        if [[ "$acl_name" != "$current_acl" ]]; then
+            current_acl="$acl_name"
+            echo "ip access-list ${type} ${acl_name}" >> "$tmpfile"
+            if [[ "$type" == "standard" ]]; then
+                count_std=$((count_std+1))
+            else
+                count_ext=$((count_ext+1))
+            fi
+        fi
 
-        print " " action " " rest
-        next
-    }
+        echo " ${action} ${rest}" >> "$tmpfile"
+    else
+        current_acl=""
+        echo "$line" >> "$tmpfile"
+    fi
+done < "$INPUT"
 
-    current_acl = ""
-    print line
-}
-END {
-    print "#STATS:" std_count ":" ext_count
-}
-' "$INPUT")
-
-stats_line=$(echo "$converted" | grep "^#STATS:")
-count_std=$(echo "$stats_line" | cut -d: -f2)
-count_ext=$(echo "$stats_line" | cut -d: -f3)
-
-echo "$converted" | grep -v "^#STATS:" > "$OUTPUT"
+cp "$tmpfile" "$OUTPUT"
+rm "$tmpfile"
 
 echo -e "${BOLD}=== Fichier converti ===${NC}"
 echo ""
-grep -v "^#STATS:" <<< "$converted"
+cat "$OUTPUT"
 echo ""
 
 echo -e "${BOLD}${CYAN}=== Résumé ===${NC}"
