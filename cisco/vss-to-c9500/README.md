@@ -6,10 +6,11 @@ Scripts de conversion de configuration Cisco IOS classique (VSS) vers IOS-XE (Ca
 
 ## Arborescence
 
-```bash
+```
 vss-to-c9500/
 ├── README.md
 ├── convert_object_group.sh   # Conversion des object-groups et ACL associées
+├── convert_interfaces.sh     # Conversion de la numérotation des interfaces
 ├── convert_vrf.sh            # Conversion des définitions VRF
 ├── convert_acl.sh            # Conversion des ACL numérotées -> nommées
 └── convert_cleanup.sh        # Suppression des commandes obsolètes
@@ -37,7 +38,7 @@ Si le fichier de sortie n'est pas précisé, le script génère automatiquement 
 Convertit les object-groups et les références dans les ACL.
 
 | Avant (IOS classique) | Après (IOS-XE) |
-| --- | --- |
+|---|---|
 | `object-group ip address NOM` | `object-group network NOM` |
 | `host-info x.x.x.x` | `host x.x.x.x` |
 | `addrgroup NOM` | `object-group NOM` |
@@ -48,12 +49,31 @@ Convertit les object-groups et les références dans les ACL.
 
 ---
 
+### `convert_interfaces.sh`
+
+Convertit la numérotation des interfaces du format VSS vers le format StackWise C9500.
+
+| Avant (VSS) | Après (C9500) |
+|---|---|
+| `GigabitEthernet1/1/1` | `GigabitEthernet1/0/1` |
+| `TenGigabitEthernet2/3/5` | `TenGigabitEthernet2/0/5` |
+
+> Le champ du milieu (module VSS) est toujours remplacé par `0` sur le C9500.
+
+Interfaces supportées : `GigabitEthernet`, `TenGigabitEthernet`, `FortyGigabitEthernet`, `HundredGigE` et leurs abréviations (`Gi`, `Te`, `Fo`, `Hu`).
+
+```bash
+./convert_interfaces.sh running-config.conf
+```
+
+---
+
 ### `convert_vrf.sh`
 
 Convertit les définitions VRF et leurs références sur les interfaces.
 
 | Avant (IOS classique) | Après (IOS-XE) |
-| --- | --- |
+|---|---|
 | `ip vrf MGMT` | `vrf definition MGMT` |
 | `ip vrf forwarding MGMT` | `vrf forwarding MGMT` |
 | *(pas de bloc address-family)* | `address-family ipv4` / `exit-address-family` ajouté automatiquement |
@@ -71,12 +91,11 @@ Convertit les définitions VRF et leurs références sur les interfaces.
 Convertit les ACL numérotées (syntaxe IOS classique) en ACL nommées (syntaxe IOS-XE recommandée).
 
 | Avant (IOS classique) | Après (IOS-XE) |
-| --- | --- |
-| `access-list 10 permit 192.168.1.0 0.0.0.255` | `ip access-list standard ACL_10` / `permit 192.168.1.0 0.0.0.255` |
-| `access-list 100 permit tcp ...` | `ip access-list extended ACL_100` / `permit tcp ...` |
+|---|---|
+| `access-list 10 permit 192.168.1.0 0.0.0.255` | `ip access-list standard ACL_10` / ` permit 192.168.1.0 0.0.0.255` |
+| `access-list 100 permit tcp ...` | `ip access-list extended ACL_100` / ` permit tcp ...` |
 
 Plages supportées :
-
 - Standard : 1–99 et 1300–1999
 - Extended : 100–199 et 2000–2699
 
@@ -91,14 +110,16 @@ Plages supportées :
 Supprime ou corrige les commandes qui n'existent plus sur IOS-XE.
 
 | Commande | Action |
-| --- | --- |
+|---|---|
 | `ip classless` | Supprimée (commentée `[SUPPRIMÉ]`) |
 | `ip subnet-zero` | Supprimée (commentée `[SUPPRIMÉ]`) |
 | `ip default-network` | Supprimée (commentée `[SUPPRIMÉ]`) |
-| `logging on` | Remplacée par `logging host <IP>` |
+| `logging on` | Supprimée |
 | `logging X.X.X.X` | Convertie en `logging host X.X.X.X` |
+| `logging ip access-list cache ...` | Supprimée (n'existe pas sur IOS-XE) |
 | `spanning-tree mode pvst` | Convertie en `spanning-tree mode rapid-pvst` |
 | `ip nat pool ... netmask` | Convertie en `prefix-length` |
+| `permit/deny icmp ... hoplimit` | Mot-clé `hoplimit` supprimé (non supporté sur IOS-XE) |
 
 > Les lignes supprimées ne sont pas effacées du fichier de sortie mais **commentées** avec le tag `[SUPPRIMÉ]` pour garder une trace.
 
@@ -112,9 +133,10 @@ Supprime ou corrige les commandes qui n'existent plus sur IOS-XE.
 
 Lors d'une migration complète, appliquer les scripts dans cet ordre :
 
-```bash
+```
 1. convert_cleanup.sh        # Nettoyer les commandes obsolètes en premier
 2. convert_vrf.sh            # VRF avant les interfaces
+3. convert_interfaces.sh     # Interfaces
 4. convert_object_group.sh   # Object-groups avant les ACL
 5. convert_acl.sh            # ACL en dernier
 ```
@@ -122,10 +144,11 @@ Lors d'une migration complète, appliquer les scripts dans cet ordre :
 Exemple en chaîne :
 
 ```bash
-./convert_cleanup.sh        conf/full-config.conf conf/full-config-step1.conf
-./convert_vrf.sh            conf/full-config-step1.conf conf/full-config-step2.conf
-./convert_object_group.sh   conf/full-config-step2.conf conf/full-config-step3.conf
-./convert_acl.sh            conf/full-config-step3.conf conf/full-config-final.conf
+./convert_cleanup.sh        full-config.conf full-config-step1.conf
+./convert_vrf.sh            full-config-step1.conf full-config-step2.conf
+./convert_interfaces.sh     full-config-step2.conf full-config-step3.conf
+./convert_object_group.sh   full-config-step3.conf full-config-step4.conf
+./convert_acl.sh            full-config-step4.conf full-config-final.conf
 ```
 
 ---
@@ -140,4 +163,4 @@ Exemple en chaîne :
 
 ## Dépôt
 
-Ces scripts font partie du dépôt `network`.
+Ces scripts font partie du dépôt `sysres`.
