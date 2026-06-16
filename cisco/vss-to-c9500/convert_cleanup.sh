@@ -4,16 +4,17 @@
 # Description: Suppression des commandes obsolètes sur IOS-XE (C9500)
 #
 # Commandes supprimées/converties :
-#   ip classless, ip subnet-zero, ip default-network  -> supprimées
+#   ip classless, ip subnet-zero, ip default-network, logging ip access-list  -> supprimées
 #   logging X.X.X.X                                   -> logging host X.X.X.X
 #   logging on                                        -> commentée
 #   spanning-tree mode pvst                           -> rapid-pvst
 #   ip nat pool ... netmask                           -> prefix-length
+#   hoplimit                                          -> supprimé
 #
 # Usage      : ./convert_cleanup.sh <fichier_source> [fichier_sortie]
 # Auteur     : Samuel PONCIN CHAPERON
 # Date       : 16-06-2026
-# Version    : 1.0.0
+# Version    : 1.3.0
 # ==============================================================================
 
 set -euo pipefail
@@ -75,12 +76,13 @@ removed_count=0
 logging_count=0
 stp_count=0
 nat_count=0
+hoplimit_count=0
 
 tmpfile=$(mktemp)
 
 while IFS= read -r line; do
     # Commandes obsolètes -> supprimées (commentées)
-    if echo "$line" | grep -qE '^(no )?(ip classless|ip subnet-zero|ip default-network)'; then
+    if echo "$line" | grep -qE '^(no )?(ip classless|ip subnet-zero|ip default-network|logging ip access-list)'; then
         echo "! [SUPPRIMÉ] $line" >> "$tmpfile"
         removed_count=$((removed_count+1))
         continue
@@ -103,6 +105,12 @@ while IFS= read -r line; do
     if echo "$line" | grep -q 'spanning-tree mode pvst'; then
         line=$(echo "$line" | sed 's/pvst/rapid-pvst/')
         stp_count=$((stp_count+1))
+    fi
+    
+    # hoplimit -> supprimé
+    if echo "$line" | grep -q 'hoplimit'; then
+        line=$(echo "$line" | sed 's/hoplimit//')
+        stp_count=$((hoplimit_count+1))
     fi
 
     # ip nat pool ... netmask X -> prefix-length N
@@ -131,6 +139,7 @@ echo -e "  ${GREEN}✔ Commandes obsolètes supprimées${NC}        : ${BOLD}$re
 echo -e "  ${GREEN}✔ logging -> logging host${NC}               : ${BOLD}$logging_count${NC} remplacement(s)"
 echo -e "  ${GREEN}✔ spanning-tree pvst -> rapid-pvst${NC}      : ${BOLD}$stp_count${NC} remplacement(s)"
 echo -e "  ${GREEN}✔ nat pool netmask -> prefix-length${NC}     : ${BOLD}$nat_count${NC} remplacement(s)"
+echo -e "  ${GREEN}✔ hoplimit -> supprimé${NC}                  : ${BOLD}$hoplimit_count${NC} remplacement(s)"
 echo ""
 echo -e "  ${YELLOW}⚠ Les lignes supprimées sont commentées avec [SUPPRIMÉ] dans le fichier de sortie${NC}"
 echo -e "  Fichier généré : ${YELLOW}${OUTPUT}${NC}"
