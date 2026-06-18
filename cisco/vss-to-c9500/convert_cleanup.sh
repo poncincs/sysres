@@ -13,8 +13,8 @@
 #
 # Usage      : ./convert_cleanup.sh <fichier_source> [fichier_sortie]
 # Auteur     : Samuel PONCIN CHAPERON
-# Date       : 16-06-2026
-# Version    : 1.3.0
+# Date       : 18-06-2026
+# Version    : 1.4.0
 # ==============================================================================
 
 set -euo pipefail
@@ -77,22 +77,36 @@ logging_count=0
 stp_count=0
 nat_count=0
 hoplimit_count=0
+log_acl_count=0
 
 tmpfile=$(mktemp)
 
 while IFS= read -r line; do
     # Commandes obsolètes -> supprimées (commentées)
-    if echo "$line" | grep -qE '^(no )?(ip classless|ip subnet-zero|ip default-network|logging ip access-list)'; then
+    if echo "$line" | grep -qE '^(no )?(ip classless|ip subnet-zero|ip default-network)'; then
         echo "! [SUPPRIMÉ] $line" >> "$tmpfile"
         removed_count=$((removed_count+1))
         continue
     fi
 
-    # logging on -> commenté
+    # logging on -> supprimé
     if echo "$line" | grep -qE '^logging on$'; then
         echo "! [SUPPRIMÉ] $line" >> "$tmpfile"
         logging_count=$((logging_count+1))
         continue
+    fi
+
+    # logging ip access-list cache ... -> supprimé (n'existe pas sur IOS-XE)
+    if echo "$line" | grep -qE '^logging ip access-list'; then
+        echo "! [SUPPRIMÉ] $line" >> "$tmpfile"
+        log_acl_count=$((log_acl_count+1))
+        continue
+    fi
+
+    # permit/deny icmp ... hoplimit -> suppression du mot-clé hoplimit
+    if echo "$line" | grep -qE '(permit|deny) icmp .* hoplimit'; then
+        line=$(echo "$line" | sed 's/ hoplimit[^ ]*//')
+        hoplimit_count=$((hoplimit_count+1))
     fi
 
     # logging X.X.X.X -> logging host X.X.X.X
@@ -105,12 +119,6 @@ while IFS= read -r line; do
     if echo "$line" | grep -q 'spanning-tree mode pvst'; then
         line=$(echo "$line" | sed 's/pvst/rapid-pvst/')
         stp_count=$((stp_count+1))
-    fi
-    
-    # hoplimit -> supprimé
-    if echo "$line" | grep -q 'hoplimit'; then
-        line=$(echo "$line" | sed 's/hoplimit//')
-        hoplimit_count=$((hoplimit_count+1))
     fi
 
     # ip nat pool ... netmask X -> prefix-length N
@@ -135,11 +143,12 @@ cat "$OUTPUT"
 echo ""
 
 echo -e "${BOLD}${CYAN}=== Résumé ===${NC}"
-echo -e "  ${GREEN}✔ Commandes obsolètes supprimées${NC}        : ${BOLD}$removed_count${NC}"
-echo -e "  ${GREEN}✔ logging -> logging host${NC}               : ${BOLD}$logging_count${NC} remplacement(s)"
-echo -e "  ${GREEN}✔ spanning-tree pvst -> rapid-pvst${NC}      : ${BOLD}$stp_count${NC} remplacement(s)"
-echo -e "  ${GREEN}✔ nat pool netmask -> prefix-length${NC}     : ${BOLD}$nat_count${NC} remplacement(s)"
-echo -e "  ${GREEN}✔ hoplimit -> supprimé${NC}                  : ${BOLD}$hoplimit_count${NC} remplacement(s)"
+echo -e "  ${GREEN}✔ Commandes obsolètes supprimées${NC}              : ${BOLD}$removed_count${NC}"
+echo -e "  ${GREEN}✔ logging -> logging host${NC}                     : ${BOLD}$logging_count${NC} remplacement(s)"
+echo -e "  ${GREEN}✔ logging ip access-list cache supprimé${NC}       : ${BOLD}$log_acl_count${NC} suppression(s)"
+echo -e "  ${GREEN}✔ spanning-tree pvst -> rapid-pvst${NC}            : ${BOLD}$stp_count${NC} remplacement(s)"
+echo -e "  ${GREEN}✔ nat pool netmask -> prefix-length${NC}           : ${BOLD}$nat_count${NC} remplacement(s)"
+echo -e "  ${GREEN}✔ icmp hoplimit supprimé${NC}                      : ${BOLD}$hoplimit_count${NC} remplacement(s)"
 echo ""
 echo -e "  ${YELLOW}⚠ Les lignes supprimées sont commentées avec [SUPPRIMÉ] dans le fichier de sortie${NC}"
 echo -e "  Fichier généré : ${YELLOW}${OUTPUT}${NC}"

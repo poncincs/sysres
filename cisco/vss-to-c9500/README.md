@@ -28,6 +28,8 @@ chmod +x <script>.sh
 
 Si le fichier de sortie n'est pas précisé, le script génère automatiquement un fichier `<source>_iosxe.conf` dans le même répertoire.
 
+> ⚠️ `convert_acl.sh` ne dépend que de bash/sed/grep/awk natifs — aucun paquet supplémentaire (type `gawk`) n'est requis.
+
 ---
 
 ## Scripts
@@ -95,9 +97,9 @@ Supprime ou corrige les commandes qui n'existent plus sur IOS-XE.
 | `ip classless` | Supprimée (commentée `[SUPPRIMÉ]`) |
 | `ip subnet-zero` | Supprimée (commentée `[SUPPRIMÉ]`) |
 | `ip default-network` | Supprimée (commentée `[SUPPRIMÉ]`) |
-| `logging on` | Supprimée |
+| `logging on` | Supprimée (commentée `[SUPPRIMÉ]`) |
 | `logging X.X.X.X` | Convertie en `logging host X.X.X.X` |
-| `logging ip access-list cache ...` | Supprimée (n'existe pas sur IOS-XE) |
+| `logging ip access-list cache ...` | Supprimée (commentée `[SUPPRIMÉ]`) — n'existe pas sur IOS-XE |
 | `spanning-tree mode pvst` | Convertie en `spanning-tree mode rapid-pvst` |
 | `ip nat pool ... netmask` | Convertie en `prefix-length` |
 | `permit/deny icmp ... hoplimit` | Mot-clé `hoplimit` supprimé (non supporté sur IOS-XE) |
@@ -117,8 +119,8 @@ Lors d'une migration complète, appliquer les scripts dans cet ordre :
 ```bash
 1. convert_cleanup.sh        # Nettoyer les commandes obsolètes en premier
 2. convert_vrf.sh            # VRF avant les interfaces
-4. convert_object_group.sh   # Object-groups avant les ACL
-5. convert_acl.sh            # ACL en dernier
+3. convert_object_group.sh   # Object-groups avant les ACL
+4. convert_acl.sh            # ACL en dernier
 ```
 
 Exemple en chaîne :
@@ -137,6 +139,7 @@ Exemple en chaîne :
 - **CBAC / `ip inspect`** : la migration vers le Zone-Based Firewall (ZBF) d'IOS-XE ne peut pas être automatisée. Une réécriture manuelle est nécessaire.
 - Les scripts traitent les cas courants. Une relecture manuelle du fichier final avant application sur le switch est fortement recommandée.
 - Toujours tester avec un `copy tftp running-config` sur un équipement de lab avant la production.
+- Si une ACL du même nom existe déjà dans la running-config cible, le `copy tftp` peut générer des erreurs `Duplicate entry exists at sequence X`. Supprimer l'ACL existante avant import (`no ip access-list extended NOM_ACL`).
 
 ---
 
